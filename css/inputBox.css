@@ -15,25 +15,15 @@
 }
 
 .input-border {
-  position: absolute;
-  background: var(--border-after-color);
-  height: 2px;
-  width: 100%;
-  bottom: 0;
-  left: 0;
-  transform: scaleX(0);
-  transform-origin: left center;
-  transition: transform 0.3s cubic-bezier(0.6, -0.28, 0.735, 0.045);
+  display: none;
 }
 
 .input:focus {
   outline: none;
 }
 
-.input:focus + .input-border,
-.input:not(:placeholder-shown) + .input-border {
-  transform: scaleX(1);
-}
+/* underline animations disabled */
+
 
 .form-control {
   position: relative;
@@ -54,14 +44,7 @@
 }
 
 .input-border-alt {
-  height: 3px;
-  background: linear-gradient(90deg, #ff6464 0%, #ffbf59 50%, #47c9ff 100%);
-  transform: scaleX(0);
-  transform-origin: left center;
-  transition: transform 0.4s cubic-bezier(0.42, 0, 0.58, 1);
+  display: none;
 }
 
-.input-alt:focus + .input-border-alt,
-.input-alt:not(:placeholder-shown) + .input-border-alt {
-  transform: scaleX(1);
-}
+/* underline animations disabled */

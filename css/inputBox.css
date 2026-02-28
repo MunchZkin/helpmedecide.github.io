@@ -1,0 +1,67 @@
+.input {
+  color: var(--text, #fff);
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 1rem;
+  background-color: transparent;
+  width: auto; /* allow dynamic resizing */
+  min-width: 30ch; /* show ~30 characters by default */
+  text-align: center;
+  box-sizing: border-box;
+  padding-inline: 0.5em;
+  padding-block: 0.7em;
+  border: none;
+  border-bottom: var(--border-height) solid var(--border-before-color);
+}
+
+.input-border {
+  position: absolute;
+  background: var(--border-after-color);
+  height: 2px;
+  width: 100%;
+  bottom: 0;
+  left: 0;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.3s cubic-bezier(0.6, -0.28, 0.735, 0.045);
+}
+
+.input:focus {
+  outline: none;
+}
+
+.input:focus + .input-border,
+.input:not(:placeholder-shown) + .input-border {
+  transform: scaleX(1);
+}
+
+.form-control {
+  position: relative;
+  --width-of-input: 900px;
+  text-align: left;
+  max-width: 90ch; /* allow wider container for 30ch inputs */
+}
+
+.input-alt {
+  font-size: 1.2rem;
+  padding-inline: 1em;
+  padding-block: 0.8em;
+}
+
+.input::placeholder {
+  text-align: center;
+  opacity: 0.85;
+}
+
+.input-border-alt {
+  height: 3px;
+  background: linear-gradient(90deg, #ff6464 0%, #ffbf59 50%, #47c9ff 100%);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.4s cubic-bezier(0.42, 0, 0.58, 1);
+}
+
+.input-alt:focus + .input-border-alt,
+.input-alt:not(:placeholder-shown) + .input-border-alt {
+  transform: scaleX(1);
+}

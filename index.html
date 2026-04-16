@@ -1,269 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Help Me Decide</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="css/shadowEffect.css">
-    <link rel="stylesheet" href="css/inputBox.css">
-    <link rel="stylesheet" href="css/askBox.css">
-    <link rel="stylesheet" href="css/decide.css">
-    <link rel="stylesheet" href="css/backtrack.css">
-    <link rel="stylesheet" href="css/top.css">
-    <link rel="stylesheet" href="css/reset.css">
-    
-    <style>
-        body {
-            background-color: #0d010f;
-            color: #EBB9F7;
-            margin: 0;
-            padding: 0;
-            font-family: system-ui, sans-serif;
-        }
-
-        /* header container with configurable left indent */
-        .header {
-            --header-indent: 1rem;
-            position: fixed;
-            top: 0;
-            left: 0;
-            padding: 1rem 1rem 0 var(--header-indent);
-            z-index: 1000;
-            text-align: left;
-        }
-
-        .header h1 {
-            margin: 0;
-            font-size: 2.5rem;
-            line-height: 1;
-            white-space: nowrap;
-        }
-
-        /* subtitle base (italic) */
-        .subtitle {
-            margin: 0.25rem 0 0 0;
-            font-style: italic;
-            font-size: 1rem;
-            opacity: 0.95;
-        }
-
-        /* main content spacing so fixed header doesn't cover it */
-        .content {
-            padding-top: 6rem; /* default spacing under header */
-            padding-left: var(--header-indent, 1rem);
-            padding-right: 1rem;
-        }
-
-        .inputs-row {
-            display: flex;
-            gap: 4ch;
-            align-items: flex-end;
-            flex-wrap: wrap;
-            max-width: 70ch;
-        }
-
-        .ask-container {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .ask-container .form__group {
-            max-width: 50ch;
-            width: 100%;
-        }
-
-        .inputs-row .form-control {
-            flex: 1 1 0;
-            max-width: none;
-            min-width: 30ch; /* ensure inputs can show up to 30 characters */
-        }
-
-        /* Desktop overrides */
-        @media (min-width: 768px) {
-            .header {
-                --header-indent: 2rem;
-                padding-top: 2rem;
-                padding-right: 2rem;
-            }
-
-            .header h1 {
-                font-size: 5.5rem;
-            }
-
-            .subtitle {
-                font-size: 2.25rem;
-            }
-            .content {
-                padding-top: 8rem;
-            }
-        }
-
-        /* Mobile overrides */
-        @media (max-width: 767px) {
-            .header {
-                --header-indent: 1rem;
-                padding-top: 1rem;
-                padding-right: 1rem;
-            }
-
-            .header h1 {
-                font-size: 3.8rem;
-            }
-
-            .subtitle {
-                font-size: 1.8rem;
-            }
-                        .content {
-                                padding-top: 5.5rem;
-                        }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LET FATE DECIDE</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="header">
-        <h1 class="highlighted-text-shadow">Decide Without Delay</h1>
-        <p class="subtitle highlighted-text-shadow">The universe chose serenity for your question: how should I proceed?</p>
-    </div>
 
-        <main class="content">
-                <div class="ask-container">
-                    <div class="form__group field">
-                        <input id="askInput" required placeholder="Name" class="form__field" type="text">
-                        <label class="form__label" for="askInput">Ask Ptah</label>
-                    </div>
-                </div>
+  <div class="layout">
 
-                <div class="inputs-row">
-                        <div class="form-control">
-                                <input
-                                        id="optionAInput"
-                                        type="text"
-                                        required
-                                        placeholder="Stay in the familiar?"
-                                        class="input input-alt"
-                                />
-                                <span class="input-border input-border-alt"></span>
-                        </div>
+    <!-- LEFT COLUMN: memory feed -->
+    <aside class="memory-col" id="memory-col" aria-label="Decision history">
+      <div class="memory-col__header">
+        <span class="mono-label">HISTORY</span>
+        <span class="mono-count" id="history-count">0</span>
+      </div>
+      <div class="memory-col__feed" id="memory-feed" role="list" aria-live="polite"></div>
+    </aside>
 
-                        <div class="form-control">
-                                <input
-                                        id="optionBInput"
-                                        type="text"
-                                        placeholder="Leap into the unknown?"
-                                        class="input input-alt"
-                                />
-                                <span class="input-border input-border-alt"></span>
-                        </div>
-                </div>
-                <div class="cta-container" style="display:flex; gap:1rem;">
-                        <button class="backtrack">
-                            <span class="backtrack-underline"> Backtrack </span>
-                        </button>
-                        <button class="cta">
-                            <span class="decide-underline"> Decide </span>
-                            <svg
-                                id="arrow-horizontal"
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="30"
-                                height="10"
-                                viewBox="0 0 46 16"
-                            >
-                                <path
-                                id="Path_10"
-                                data-name="Path 10"
-                                d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z"
-                                transform="translate(30)"
-                                ></path>
-                            </svg>
-                        </button>
-                </div>
-        </main>
+    <!-- RIGHT COLUMN: main interface -->
+    <main class="main-col" role="main">
 
-    <!-- floating reset button -->
-    <div class="floating-reset">
-      <!-- From Uiverse.io by Creatlydev --> 
-      <button class="button">
-        <p class="button__text">
-          <span style="--index: 0;">R</span>
-          <span style="--index: 1;">E</span>
-          <span style="--index: 2;">S</span>
-          <span style="--index: 3;">E</span>
-          <span style="--index: 4;">T</span>
-          <span style="--index: 5;"> </span>
-          <span style="--index: 6;">F</span>
-          <span style="--index: 7;">O</span>
-          <span style="--index: 8;">R</span>
-          <span style="--index: 9;">T</span>
-          <span style="--index: 10;">U</span>
-          <span style="--index: 11;">N</span>
-          <span style="--index: 12;">E</span>
-          <span style="--index: 13;"> </span>
-          <span style="--index: 14;">N</span>
-          <span style="--index: 15;">O</span>
-          <span style="--index: 16;">W</span>
-          <span style="--index: 17;">!</span>
-        </p>
+      <header class="site-header">
+        <div class="site-header__tag mono-label">DECISION ENGINE v1.0</div>
+        <h1 class="site-title">LET FATE<br>DECIDE.</h1>
+        <p class="site-sub">The universe has been waiting.<br>It doesn't have all day.</p>
+      </header>
 
-        <div class="button__circle">
-          <svg
-            viewBox="0 0 14 15"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            class="button__icon"
-            width="14"
+      <section class="interface">
+
+        <!-- Question -->
+        <div class="field">
+          <label for="question" class="field__label mono-label">QUESTION</label>
+          <input
+            type="text"
+            id="question"
+            class="field__input"
+            placeholder="Should I quit my job?"
+            maxlength="120"
+            autocomplete="off"
+            spellcheck="false"
           >
-            <path
-              d="M13.376 11.552l-.264-10.44-10.44-.24.024 2.28 6.96-.048L.2 12.56l1.488 1.488 9.432-9.432-.048 6.912 2.304.024z"
-              fill="currentColor"
-            ></path>
-          </svg>
+        </div>
 
-          <svg
-            viewBox="0 0 14 15"
-            fill="none"
-            width="14"
-            xmlns="http://www.w3.org/2000/svg"
-            class="button__icon button__icon--copy"
-          >
-            <path
-              d="M13.376 11.552l-.264-10.44-10.44-.24.024 2.28 6.96-.048L.2 12.56l1.488 1.488 9.432-9.432-.048 6.912 2.304.024z"
-              fill="currentColor"
-            ></path>
-          </svg>
+        <!-- Options row -->
+        <div class="options-row">
+          <div class="option-block option-block--heads">
+            <label for="opt-heads" class="field__label mono-label">HEADS</label>
+            <input type="text" id="opt-heads" class="field__input" placeholder="Do it" maxlength="40" autocomplete="off">
+          </div>
+          <div class="option-sep mono-label">VS</div>
+          <div class="option-block option-block--tails">
+            <label for="opt-tails" class="field__label mono-label">TAILS</label>
+            <input type="text" id="opt-tails" class="field__input" placeholder="Don't" maxlength="40" autocomplete="off">
+          </div>
         </div>
-      </button>
-    </div>
 
-    <div>
-        <button>
-        <div class="text">
-            <span>Back</span>
-            <span>to</span>
-            <span>top</span>
+        <!-- Coin -->
+        <div class="coin-zone">
+          <div class="coin-wrapper">
+            <div class="coin" id="coin">
+              <div class="coin__face coin__face--heads">H</div>
+              <div class="coin__face coin__face--tails">T</div>
+            </div>
+            <div class="coin-readout" id="coin-readout" aria-live="polite" aria-atomic="true">
+              <span class="coin-readout__side" id="readout-side">--</span>
+              <span class="coin-readout__option" id="readout-option"></span>
+            </div>
+          </div>
         </div>
-        <div class="clone">
-            <span>Back</span>
-            <span>to</span>
-            <span>top</span>
+
+        <!-- Result -->
+        <div class="result-bar" id="result-bar" role="status" aria-live="polite">
+          <span id="result-text"></span>
         </div>
-        <svg
-            stroke-width="2"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            fill="none"
-            class="h-6 w-6"
-            xmlns="http://www.w3.org/2000/svg"
-            width="20px"
-        >
-            <path
-            d="M14 5l7 7m0 0l-7 7m7-7H3"
-            stroke-linejoin="round"
-            stroke-linecap="round"
-            ></path>
-        </svg>
+
+        <!-- Flip button -->
+        <button class="btn-flip" id="btn-flip" type="button">
+          <span class="btn-flip__main">FLIP COIN</span>
+          <span class="btn-flip__sub">[ press enter or click ]</span>
         </button>
-    </div>
 
+        <!-- Counter -->
+        <div class="flip-counter" id="flip-counter"></div>
+
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Memory detail panel -->
+  <div class="panel-backdrop" id="panel-backdrop" hidden></div>
+  <div class="detail-panel" id="detail-panel" role="dialog" aria-modal="true" aria-label="Past decision" hidden>
+    <div class="detail-panel__inner">
+      <button class="detail-panel__close" id="panel-close" aria-label="Close">[ CLOSE ]</button>
+      <div class="detail-panel__tag mono-label" id="panel-time"></div>
+      <h2 class="detail-panel__question" id="panel-question"></h2>
+      <div class="detail-panel__vs">
+        <div class="detail-panel__opt" id="panel-heads-opt"></div>
+        <div class="detail-panel__vs-sep mono-label">VS</div>
+        <div class="detail-panel__opt" id="panel-tails-opt"></div>
+      </div>
+      <div class="detail-panel__result" id="panel-result"></div>
+      <p class="detail-panel__epitaph mono-label">THE COIN SPOKE. YOU LISTENED.<br>OR DIDN'T. EITHER WAY.</p>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>

@@ -1,35 +1,81 @@
 'use strict';
 
+// =============================================
+// STATE
+// =============================================
 const state = {
   flips: 0,
   history: [],
   isFlipping: false,
+  hasResult: false,
 };
+
+// Questions stored against a silent/blank flip
+const SILENT_QUESTIONS = [
+  'A silent question.',
+  'Something unspeakable.',
+  'A thought too private to type.',
+  'The one you already know the answer to.',
+  'An unnamed feeling.',
+  'Whatever you were thinking just now.',
+  'Nothing. Everything. Both.',
+  'The question that brought you here.',
+];
+
+// Rotating placeholders — cycles every 4s while the field is empty and unfocused
+const PLACEHOLDERS = [
+  'Should I quit my job?',
+  'Is this the right move?',
+  'Do I send the message?',
+  'Should I order the thing?',
+  'Is it too late to change my mind?',
+  'Do I stay or do I go?',
+  'Should I say something?',
+  'Is this a sign?',
+  'Do I take the risk?',
+  'Should I go back to sleep?',
+  'Is it worth it?',
+  'Do I tell them?',
+  'Should I start over?',
+  'Is now the right time?',
+  'Do I trust my gut on this?',
+];
 
 const $ = (id) => document.getElementById(id);
 
 const dom = {
-  question:    $('question'),
-  optHeads:    $('opt-heads'),
-  optTails:    $('opt-tails'),
-  coin:        $('coin'),
-  readoutSide: $('readout-side'),
-  readoutOpt:  $('readout-option'),
-  resultBar:   $('result-bar'),
-  resultText:  $('result-text'),
-  btnFlip:     $('btn-flip'),
-  flipCounter: $('flip-counter'),
-  memFeed:     $('memory-feed'),
-  histCount:   $('history-count'),
-  backdrop:    $('panel-backdrop'),
-  panel:       $('detail-panel'),
-  panelClose:  $('panel-close'),
-  panelTime:   $('panel-time'),
-  panelQ:      $('panel-question'),
-  panelHeads:  $('panel-heads-opt'),
-  panelTails:  $('panel-tails-opt'),
-  panelResult: $('panel-result'),
+  question:       $('question'),
+  optHeads:       $('opt-heads'),
+  optTails:       $('opt-tails'),
+  coin:           $('coin'),
+  readoutSide:    $('readout-side'),
+  readoutOpt:     $('readout-option'),
+  resultBar:      $('result-bar'),
+  resultText:     $('result-text'),
+  btnFlip:        $('btn-flip'),
+  btnNewQuestion: $('btn-new-question'),
+  btnFlipAgain:   $('btn-flip-again'),
+  ctaFlip:        $('cta-flip'),
+  ctaResult:      $('cta-result'),
+  flipCounter:    $('flip-counter'),
+  memFeed:        $('memory-feed'),
+  histCount:      $('history-count'),
+  btnClearAll:    $('btn-clear-all'),
+  backdrop:       $('panel-backdrop'),
+  panel:          $('detail-panel'),
+  panelClose:     $('panel-close'),
+  panelReflip:    $('panel-reflip'),
+  panelTime:      $('panel-time'),
+  panelQ:         $('panel-question'),
+  panelHeads:     $('panel-heads-opt'),
+  panelTails:     $('panel-tails-opt'),
+  panelResult:    $('panel-result'),
+  btnClearQ:      $('btn-clear-question'),
 };
+
+// =============================================
+// HELPERS
+// =============================================
 
 function formatTime(ts) {
   const diff = Date.now() - ts;
@@ -56,24 +102,93 @@ function shake(el) {
   setTimeout(() => el.classList.remove('shake'), 350);
 }
 
-function resetResult() {
+// =============================================
+// CTA STATE MACHINE
+// Design Engineer: the button zone has two modes:
+//   IDLE    → show [ FLIP COIN ]
+//   RESULT  → show [ NEW QUESTION ] + [ FLIP AGAIN ]
+// =============================================
+
+function showFlipCTA() {
+  dom.ctaFlip.hidden   = false;
+  dom.ctaResult.hidden = true;
+  state.hasResult      = false;
+}
+
+function showResultCTA() {
+  dom.ctaFlip.hidden   = true;
+  dom.ctaResult.hidden = false;
+  state.hasResult      = true;
+}
+
+// =============================================
+// CLEAR / RESET
+// =============================================
+
+// Full form clear — called by NEW QUESTION button
+// Design Engineer: clears inputs, resets coin, resets result bar,
+// returns focus to question field. Form looks entirely fresh.
+function newQuestion() {
+  dom.question.value  = '';
+  dom.optHeads.value  = '';
+  dom.optTails.value  = '';
+  resetVisuals();
+  showFlipCTA();
+  dom.question.focus();
+  updateClearQButton();
+  // On mobile: scroll main area into view
+  dom.question.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Clear question field inline button
+function clearQuestionField() {
+  dom.question.value = '';
+  dom.question.focus();
+  updateClearQButton();
+}
+
+// Show/hide the × clear button based on field content
+function updateClearQButton() {
+  dom.btnClearQ.hidden = dom.question.value.length === 0;
+}
+
+// BUG 1 FIX: CLEAR fires immediately — no confirm needed. Decisive.
+function clearAllHistory() {
+  state.history = [];
+  state.flips   = 0;
+  try { sessionStorage.removeItem('fate-history'); } catch(e) {}
+  dom.flipCounter.textContent = '';
+  resetVisuals();
+  showFlipCTA();
+  renderFeed();
+}
+
+dom.btnClearAll.addEventListener('click', clearAllHistory);
+dom.btnNewQuestion.addEventListener('click',  newQuestion);
+
+// =============================================
+// VISUALS RESET (coin + result only, not inputs)
+// =============================================
+
+function resetVisuals() {
   dom.resultBar.classList.remove('result-bar--active');
-  dom.resultText.textContent = '';
+  dom.resultText.textContent  = '';
   dom.readoutSide.textContent = '--';
   dom.readoutOpt.textContent  = '';
   dom.coin.classList.remove(
     'coin--landed-heads', 'coin--landed-tails',
-    'coin--show-heads', 'coin--show-tails'
+    'coin--show-heads',   'coin--show-tails'
   );
 }
 
-/* =========================================
-   MEMORY FEED (structured, inline)
-   ========================================= */
+// =============================================
+// MEMORY FEED
+// =============================================
 
 function renderFeed() {
   dom.memFeed.innerHTML = '';
   dom.histCount.textContent = state.history.length;
+  dom.btnClearAll.hidden = state.history.length === 0;
 
   if (state.history.length === 0) {
     const empty = document.createElement('div');
@@ -85,17 +200,16 @@ function renderFeed() {
 
   const total = state.history.length;
 
-  state.history.slice().reverse().forEach((d, reverseIndex) => {
-    const index = total - reverseIndex; // display number (newest = highest)
-    const item = document.createElement('div');
+  state.history.slice().reverse().forEach((d, ri) => {
+    const index = total - ri;
+    const item  = document.createElement('div');
     item.className = 'mem-item mem-item--new';
     item.setAttribute('role', 'listitem');
     item.setAttribute('tabindex', '0');
     item.setAttribute('aria-label', 'Decision ' + index + ': ' + d.question);
 
-    // Age classes based on how old in the list
-    if (reverseIndex >= 3 && reverseIndex < 8) item.classList.add('mem-item--aged');
-    else if (reverseIndex >= 8)                item.classList.add('mem-item--ancient');
+    if (ri >= 3 && ri < 8) item.classList.add('mem-item--aged');
+    else if (ri >= 8)      item.classList.add('mem-item--ancient');
 
     const winner = d.result === 'heads' ? d.optHeads : d.optTails;
 
@@ -114,26 +228,29 @@ function renderFeed() {
     dom.memFeed.appendChild(item);
   });
 
-  // remove animation class after it plays so re-renders don't replay
   setTimeout(() => {
     dom.memFeed.querySelectorAll('.mem-item--new').forEach(el => el.classList.remove('mem-item--new'));
   }, 300);
 }
 
-/* =========================================
-   DETAIL PANEL
-   ========================================= */
+// =============================================
+// DETAIL PANEL
+// =============================================
+
+let _panelActiveId = null;
 
 function openPanel(id) {
   const d = state.history.find(x => x.id === id);
   if (!d) return;
+  _panelActiveId = id;
+
   const winner = d.result === 'heads' ? d.optHeads : d.optTails;
   const side   = d.result === 'heads' ? 'HEADS' : 'TAILS';
 
   dom.panelTime.textContent   = formatTime(d.timestamp);
-  dom.panelQ.textContent      = d.question   || 'An unspoken question.';
-  dom.panelHeads.textContent  = d.optHeads   || 'Heads';
-  dom.panelTails.textContent  = d.optTails   || 'Tails';
+  dom.panelQ.textContent      = d.question  || 'An unspoken question.';
+  dom.panelHeads.textContent  = d.optHeads  || 'HEADS';
+  dom.panelTails.textContent  = d.optTails  || 'TAILS';
   dom.panelResult.textContent = side + ' \u2014 ' + (winner || side);
 
   dom.panel.hidden    = false;
@@ -144,18 +261,47 @@ function openPanel(id) {
 function closePanel() {
   dom.panel.hidden    = true;
   dom.backdrop.hidden = true;
-  dom.btnFlip.focus();
+  _panelActiveId      = null;
 }
 
-dom.panelClose.addEventListener('click', closePanel);
-dom.backdrop.addEventListener('click', closePanel);
+// REFLIP: loads past question into inputs, resets visuals so form looks fresh
+// Design Engineer fix: resetVisuals() + showFlipCTA() so the form
+// doesn't look pre-answered when the user loads a past question.
+// BUG 3 FIX: populate fields, reset ALL visuals so form looks
+// completely fresh, then close panel and scroll to the TOP of the
+// interface — not just btnFlip — so the user sees the full form.
+function reflipFromPanel() {
+  if (!_panelActiveId) return;
+  const d = state.history.find(x => x.id === _panelActiveId);
+  if (!d) return;
+
+  dom.question.value = d.question || '';
+  dom.optHeads.value = d.optHeads || '';
+  dom.optTails.value = d.optTails || '';
+
+  resetVisuals();   // clears coin, result bar, readout, all accent classes
+  showFlipCTA();    // shows FLIP COIN, hides NEW QUESTION / FLIP AGAIN
+
+  closePanel();     // hides panel + backdrop, nulls _panelActiveId
+  updateClearQButton();
+
+  // Scroll to the interface section so user sees populated form + coin
+  document.getElementById('interface').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  dom.question.focus();
+  dom.question.select();
+}
+
+dom.panelClose.addEventListener('click',  closePanel);
+dom.panelReflip.addEventListener('click', reflipFromPanel);
+dom.backdrop.addEventListener('click',    closePanel);
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !dom.panel.hidden) closePanel();
 });
 
-/* =========================================
-   FLIP LOGIC
-   ========================================= */
+// =============================================
+// FLIP LOGIC
+// =============================================
 
 function handleFlip() {
   if (state.isFlipping) { shake(dom.btnFlip); return; }
@@ -164,18 +310,14 @@ function handleFlip() {
   const optHeads = dom.optHeads.value.trim() || 'HEADS';
   const optTails = dom.optTails.value.trim() || 'TAILS';
 
-  if (!question) {
-    shake(dom.question);
-    const orig = dom.question.placeholder;
-    dom.question.placeholder = 'ENTER A QUESTION FIRST.';
-    dom.question.focus();
-    setTimeout(() => { dom.question.placeholder = orig; }, 2500);
-    return;
-  }
+  // No question? Fine. The coin doesn't need context to be decisive.
+  const questionless = !question;
+  const displayQuestion = question || SILENT_QUESTIONS[Math.floor(Math.random() * SILENT_QUESTIONS.length)];
 
   state.isFlipping     = true;
   dom.btnFlip.disabled = true;
-  resetResult();
+  resetVisuals();
+  showFlipCTA();   // ensure we're in flip state during animation
 
   const SECRETS = {
     '42':           { side: 'heads', phrase: 'HEADS. THE ANSWER WAS ALWAYS HEADS.' },
@@ -201,6 +343,19 @@ function handleFlip() {
     let phrase;
     if (secret) {
       phrase = secret.phrase;
+    } else if (questionless) {
+      // No question asked — the coin flips into the void
+      const silentPhrases = [
+        sideName + '. SOMETIMES THAT IS ALL YOU NEED.',
+        sideName + '. NO CONTEXT REQUIRED.',
+        'THE COIN DOES NOT NEED TO KNOW WHY.',
+        sideName + '. THE UNIVERSE SHRUGS AND MOVES ON.',
+        'JUST ' + sideName + '. INTERPRET AS NEEDED.',
+        sideName + '. EVEN WITHOUT A QUESTION, AN ANSWER.',
+        'THE COIN SPEAKS. THE REST IS YOUR PROBLEM.',
+        sideName + '. SOME THINGS DON\'T NEED FRAMING.',
+      ];
+      phrase = silentPhrases[Math.floor(Math.random() * silentPhrases.length)];
     } else {
       const phrases = [
         sideName + '. ' + winner + '. THE COIN HAS DECIDED.',
@@ -209,6 +364,8 @@ function handleFlip() {
         winner + '. THE COIN RARELY LIES.',
         'FATE CHOSE ' + winner + '. NO FURTHER QUESTIONS.',
         sideName + '. SOME PART OF YOU FEELS RELIEF OR DREAD. THAT IS YOUR ANSWER.',
+        winner + '. THE COIN HAD NO DOUBTS.',
+        'THE ANSWER IS ' + winner + '. STOP OVERTHINKING.',
       ];
       phrase = phrases[Math.floor(Math.random() * phrases.length)];
     }
@@ -218,11 +375,18 @@ function handleFlip() {
     dom.readoutSide.textContent = sideName;
     dom.readoutOpt.textContent  = winner;
 
+    // Swap CTA to post-result state
+    showResultCTA();
+    dom.btnNewQuestion.focus();
+
+    // Scroll result into view on mobile
+    dom.resultBar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
     state.flips++;
     const decision = {
       id:        Date.now() + '-' + Math.random().toString(36).slice(2),
       timestamp: Date.now(),
-      question,
+      question:  displayQuestion,
       optHeads,
       optTails,
       result,
@@ -235,20 +399,37 @@ function handleFlip() {
 
     state.isFlipping     = false;
     dom.btnFlip.disabled = false;
-    dom.btnFlip.focus();
   }, 1500);
 }
 
-dom.btnFlip.addEventListener('click', handleFlip);
-dom.question.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleFlip(); });
+// BUG 2 FIX: call handleFlip synchronously — no timeout.
+// The 80ms gap was causing a window where both CTA states were briefly
+// visible simultaneously, showing 3 buttons at once.
+function handleFlipAgain() {
+  showFlipCTA();
+  handleFlip();
+}
 
-/* =========================================
-   INIT
-   ========================================= */
+// Event bindings
+dom.btnFlip.addEventListener('click',     handleFlip);
+dom.btnFlipAgain.addEventListener('click', handleFlipAgain);
+
+const enterKey = (e) => { if (e.key === 'Enter') handleFlip(); };
+dom.question.addEventListener('keydown',  enterKey);
+dom.optHeads.addEventListener('keydown',  enterKey);
+dom.optTails.addEventListener('keydown',  enterKey);
+
+// Inline clear button for question field
+dom.btnClearQ.addEventListener('click', clearQuestionField);
+dom.question.addEventListener('input',  updateClearQButton);
+
+// =============================================
+// INIT
+// =============================================
 
 function init() {
   dom.question.focus();
-  dom.coin.classList.add('coin--landed-heads');
+  showFlipCTA();
 
   try {
     const saved = sessionStorage.getItem('fate-history');
@@ -263,6 +444,29 @@ function init() {
   } catch(e) {}
 
   renderFeed();
+  updateClearQButton();
+  startPlaceholderCycle();
+}
+
+// Rotate placeholder text while the question field is empty and not focused.
+// Pauses when user is typing. Resumes when they clear the field.
+function startPlaceholderCycle() {
+  let idx = 0;
+  let paused = false;
+
+  dom.question.addEventListener('focus', () => { paused = true; });
+  dom.question.addEventListener('blur',  () => {
+    if (!dom.question.value) paused = false;
+  });
+  dom.question.addEventListener('input', () => {
+    paused = dom.question.value.length > 0;
+  });
+
+  setInterval(() => {
+    if (paused || dom.question.value) return;
+    idx = (idx + 1) % PLACEHOLDERS.length;
+    dom.question.placeholder = PLACEHOLDERS[idx];
+  }, 3200);
 }
 
 init();

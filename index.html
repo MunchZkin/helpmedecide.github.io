@@ -10,16 +10,19 @@
 
   <div class="layout">
 
-    <!-- LEFT COLUMN: memory feed -->
+    <!-- LEFT: history column -->
     <aside class="memory-col" id="memory-col" aria-label="Decision history">
       <div class="memory-col__header">
         <span class="mono-label">HISTORY</span>
-        <span class="mono-count" id="history-count">0</span>
+        <div class="memory-col__header-actions">
+          <span class="mono-count" id="history-count">0</span>
+          <button class="btn-clear-all" id="btn-clear-all" aria-label="Clear all history" hidden>[ CLEAR ]</button>
+        </div>
       </div>
       <div class="memory-col__feed" id="memory-feed" role="list" aria-live="polite"></div>
     </aside>
 
-    <!-- RIGHT COLUMN: main interface -->
+    <!-- RIGHT: main interface -->
     <main class="main-col" role="main">
 
       <header class="site-header">
@@ -28,30 +31,34 @@
         <p class="site-sub">The universe has been waiting.<br>It doesn't have all day.</p>
       </header>
 
-      <section class="interface">
+      <section class="interface" id="interface">
 
-        <!-- Question -->
-        <div class="field">
+        <!-- Question with inline clear -->
+        <div class="field field--with-clear">
           <label for="question" class="field__label mono-label">QUESTION</label>
-          <input
-            type="text"
-            id="question"
-            class="field__input"
-            placeholder="Should I quit my job?"
-            maxlength="120"
-            autocomplete="off"
-            spellcheck="false"
-          >
+          <div class="field__wrap">
+            <input
+              type="text"
+              id="question"
+              class="field__input"
+              placeholder="Should I quit my job?"
+              maxlength="120"
+              autocomplete="off"
+              spellcheck="false"
+              aria-describedby="question-state"
+            >
+            <button class="field__clear" id="btn-clear-question" aria-label="Clear question" hidden>×</button>
+          </div>
         </div>
 
-        <!-- Options row -->
+        <!-- Options -->
         <div class="options-row">
-          <div class="option-block option-block--heads">
+          <div class="option-block">
             <label for="opt-heads" class="field__label mono-label">HEADS</label>
             <input type="text" id="opt-heads" class="field__input" placeholder="Do it" maxlength="40" autocomplete="off">
           </div>
           <div class="option-sep mono-label">VS</div>
-          <div class="option-block option-block--tails">
+          <div class="option-block">
             <label for="opt-tails" class="field__label mono-label">TAILS</label>
             <input type="text" id="opt-tails" class="field__input" placeholder="Don't" maxlength="40" autocomplete="off">
           </div>
@@ -76,13 +83,29 @@
           <span id="result-text"></span>
         </div>
 
-        <!-- Flip button -->
-        <button class="btn-flip" id="btn-flip" type="button">
-          <span class="btn-flip__main">FLIP COIN</span>
-          <span class="btn-flip__sub">[ press enter or click ]</span>
-        </button>
+        <!-- CTA zone: swaps between FLIP state and POST-RESULT state -->
+        <div class="cta-zone" id="cta-zone">
+          <!-- State A: ready to flip -->
+          <div class="cta-flip" id="cta-flip">
+            <button class="btn-flip" id="btn-flip" type="button">
+              <span class="btn-flip__main">FLIP COIN</span>
+              <span class="btn-flip__sub">[ enter or click ]</span>
+            </button>
+          </div>
 
-        <!-- Counter -->
+          <!-- State B: post-result actions (hidden until a result lands) -->
+          <div class="cta-result" id="cta-result" hidden>
+            <button class="btn-action btn-action--primary" id="btn-new-question" type="button">
+              <span class="btn-action__main">NEW QUESTION</span>
+              <span class="btn-action__sub">[ clear and start over ]</span>
+            </button>
+            <button class="btn-action btn-action--secondary" id="btn-flip-again" type="button">
+              <span class="btn-action__main">FLIP AGAIN</span>
+              <span class="btn-action__sub">[ same question ]</span>
+            </button>
+          </div>
+        </div>
+
         <div class="flip-counter" id="flip-counter"></div>
 
       </section>
@@ -90,11 +113,14 @@
     </main>
   </div>
 
-  <!-- Memory detail panel -->
+  <!-- Detail panel -->
   <div class="panel-backdrop" id="panel-backdrop" hidden></div>
   <div class="detail-panel" id="detail-panel" role="dialog" aria-modal="true" aria-label="Past decision" hidden>
     <div class="detail-panel__inner">
-      <button class="detail-panel__close" id="panel-close" aria-label="Close">[ CLOSE ]</button>
+      <div class="detail-panel__actions">
+        <button class="detail-panel__close"  id="panel-close"  aria-label="Close">[ CLOSE ]</button>
+        <button class="detail-panel__reflip" id="panel-reflip" aria-label="Load this question back">[ REFLIP ]</button>
+      </div>
       <div class="detail-panel__tag mono-label" id="panel-time"></div>
       <h2 class="detail-panel__question" id="panel-question"></h2>
       <div class="detail-panel__vs">

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LET FATE DECIDE</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="layout">
+
+    <!-- LEFT COLUMN: memory feed -->
+    <aside class="memory-col" id="memory-col" aria-label="Decision history">
+      <div class="memory-col__header">
+        <span class="mono-label">HISTORY</span>
+        <span class="mono-count" id="history-count">0</span>
+      </div>
+      <div class="memory-col__feed" id="memory-feed" role="list" aria-live="polite"></div>
+    </aside>
+
+    <!-- RIGHT COLUMN: main interface -->
+    <main class="main-col" role="main">
+
+      <header class="site-header">
+        <div class="site-header__tag mono-label">DECISION ENGINE v1.0</div>
+        <h1 class="site-title">LET FATE<br>DECIDE.</h1>
+        <p class="site-sub">The universe has been waiting.<br>It doesn't have all day.</p>
+      </header>
+
+      <section class="interface">
+
+        <!-- Question -->
+        <div class="field">
+          <label for="question" class="field__label mono-label">QUESTION</label>
+          <input
+            type="text"
+            id="question"
+            class="field__input"
+            placeholder="Should I quit my job?"
+            maxlength="120"
+            autocomplete="off"
+            spellcheck="false"
+          >
+        </div>
+
+        <!-- Options row -->
+        <div class="options-row">
+          <div class="option-block option-block--heads">
+            <label for="opt-heads" class="field__label mono-label">HEADS</label>
+            <input type="text" id="opt-heads" class="field__input" placeholder="Do it" maxlength="40" autocomplete="off">
+          </div>
+          <div class="option-sep mono-label">VS</div>
+          <div class="option-block option-block--tails">
+            <label for="opt-tails" class="field__label mono-label">TAILS</label>
+            <input type="text" id="opt-tails" class="field__input" placeholder="Don't" maxlength="40" autocomplete="off">
+          </div>
+        </div>
+
+        <!-- Coin -->
+        <div class="coin-zone">
+          <div class="coin-wrapper">
+            <div class="coin" id="coin">
+              <div class="coin__face coin__face--heads">H</div>
+              <div class="coin__face coin__face--tails">T</div>
+            </div>
+            <div class="coin-readout" id="coin-readout" aria-live="polite" aria-atomic="true">
+              <span class="coin-readout__side" id="readout-side">--</span>
+              <span class="coin-readout__option" id="readout-option"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Result -->
+        <div class="result-bar" id="result-bar" role="status" aria-live="polite">
+          <span id="result-text"></span>
+        </div>
+
+        <!-- Flip button -->
+        <button class="btn-flip" id="btn-flip" type="button">
+          <span class="btn-flip__main">FLIP COIN</span>
+          <span class="btn-flip__sub">[ press enter or click ]</span>
+        </button>
+
+        <!-- Counter -->
+        <div class="flip-counter" id="flip-counter"></div>
+
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Memory detail panel -->
+  <div class="panel-backdrop" id="panel-backdrop" hidden></div>
+  <div class="detail-panel" id="detail-panel" role="dialog" aria-modal="true" aria-label="Past decision" hidden>
+    <div class="detail-panel__inner">
+      <button class="detail-panel__close" id="panel-close" aria-label="Close">[ CLOSE ]</button>
+      <div class="detail-panel__tag mono-label" id="panel-time"></div>
+      <h2 class="detail-panel__question" id="panel-question"></h2>
+      <div class="detail-panel__vs">
+        <div class="detail-panel__opt" id="panel-heads-opt"></div>
+        <div class="detail-panel__vs-sep mono-label">VS</div>
+        <div class="detail-panel__opt" id="panel-tails-opt"></div>
+      </div>
+      <div class="detail-panel__result" id="panel-result"></div>
+      <p class="detail-panel__epitaph mono-label">THE COIN SPOKE. YOU LISTENED.<br>OR DIDN'T. EITHER WAY.</p>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
